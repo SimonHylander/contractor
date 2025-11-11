@@ -110,7 +110,7 @@ function IconContainer({
   const [hovered, setHovered] = useState(false);
 
   return (
-    <button type="button" onClick={onClick}>
+    <button type="button" onClick={onClick} className="cursor-pointer">
       <motion.div
         ref={ref}
         style={{ width, height }}

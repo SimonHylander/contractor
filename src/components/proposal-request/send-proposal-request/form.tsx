@@ -7,6 +7,7 @@ import {
   useEffect,
   useCallback,
   useState,
+  useMemo,
 } from "react";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
@@ -17,6 +18,8 @@ import { useComposer } from "./context";
 import { GenerateOutlineButton } from "~/components/generate-outline/generate-outline-button";
 import { api } from "~/trpc/react";
 import { useTextStream } from "~/hooks/use-outline-stream";
+import { useVoice } from "~/hooks/use-voice";
+import { useVoiceStore } from "~/store/voice-store";
 
 const FormContext = createContext<ReturnType<
   typeof useSendProposalRequestForm
@@ -90,6 +93,8 @@ SendProposalRequestForm.Fields = () => {
   const { project, actions: composerActions } = useComposer();
   const form = useFormContext();
 
+  const { intent, transcription } = useVoiceStore();
+
   const stream = useTextStream({
     subscription: api.proposalRequest.generateOutline.useSubscription,
     buildInput: (sessionId) => ({
@@ -105,10 +110,36 @@ SendProposalRequestForm.Fields = () => {
     },
   });
 
+  const intentStream = useTextStream({
+    subscription: api.proposalRequest.generateOutlineForIntent.useSubscription,
+    buildInput: (sessionId) => ({
+      projectId: project.id,
+      outline: form.state.values.description,
+      userInstruction: transcription ?? "",
+      lastEventId: sessionId,
+    }),
+    onChunk: (chunk) => {
+      form.setFieldValue("description", (prev) => prev + chunk);
+    },
+    onComplete: () => {},
+    onError: (error) => {
+      console.error(error);
+    },
+  });
+
   const handleGenerate = useCallback(() => {
     composerActions.resetDescription();
     stream.start();
   }, [composerActions, stream]);
+
+  useEffect(() => {
+    console.log("Intent:", intent);
+    console.log("Transcription:", transcription);
+    if (intent === "edit-proposal-description" && transcription) {
+      form.setFieldValue("description", "");
+      intentStream.start();
+    }
+  }, [intent, transcription]);
 
   return (
     <form.Field

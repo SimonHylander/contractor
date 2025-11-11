@@ -18,7 +18,6 @@ export async function generateOutline(project: Project) {
   const prompt = buildPrompt(project);
 
   const { textStream } = await streamText({
-    // model: "gpt-5-mini",
     model: "gpt-5-nano",
     prompt,
     temperature: 0.1,

@@ -16,6 +16,7 @@ type UseSubscription<TInput> = (
 
 type UseTextStreamArgs<TInput> = {
   subscription: UseSubscription<TInput>;
+  enabled?: boolean;
   buildInput: (sessionId: string) => TInput;
   onChunk?: (chunk: string) => void;
   onComplete?: () => void;
@@ -23,6 +24,7 @@ type UseTextStreamArgs<TInput> = {
 };
 
 export function useTextStream<TInput>({
+  enabled = true,
   subscription,
   buildInput,
   onChunk,
@@ -43,6 +45,7 @@ export function useTextStream<TInput>({
 
   subscription(!sessionId ? skipToken : buildInput(sessionId), {
     onData: ({ id, data }) => {
+      console.log(id);
       if (id === "chunk" && typeof data === "string") {
         onChunk?.(data);
 
@@ -68,6 +71,6 @@ export function useTextStream<TInput>({
       start,
       stop,
     }),
-    [firstChunkReceived, sessionId, start, stop],
+    [buildInput, firstChunkReceived, sessionId, start, stop],
   );
 }

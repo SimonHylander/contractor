@@ -12,13 +12,11 @@ export function ClientWorkspace({
   children: React.ReactNode;
 }) {
   return (
-    <VoiceProvider>
-      <ClientWorkspaceProvider userId={userId}>
-        <Composer.Container>
-          <Composer.Content />
-          <Composer.Sidebar>{children}</Composer.Sidebar>
-        </Composer.Container>
-      </ClientWorkspaceProvider>
-    </VoiceProvider>
+    <ClientWorkspaceProvider userId={userId}>
+      <Composer.Container>
+        <Composer.Content />
+        <Composer.Sidebar>{children}</Composer.Sidebar>
+      </Composer.Container>
+    </ClientWorkspaceProvider>
   );
 }

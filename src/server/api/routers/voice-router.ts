@@ -16,7 +16,8 @@ export const voiceRouter = createTRPCRouter({
       // const intent = await determineIntent(result.text);
 
       return {
-        text: "Add a hello section to the proposal description",
+        // text: "Remove any hello and goodbye section for the proposal description",
+        text: "Add a hello and goodbye section for the proposal description",
         intent: "edit-proposal-description" as ContractorAction,
       };
     }),

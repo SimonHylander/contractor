@@ -8,7 +8,6 @@ type GenerateOutlineButtonProps = {
   onGenerate: () => void;
   disabled?: boolean;
   className?: string;
-  variant?: React.ComponentProps<typeof Button>["variant"];
 };
 
 export function GenerateOutlineButton({
@@ -16,12 +15,11 @@ export function GenerateOutlineButton({
   onGenerate,
   disabled,
   className,
-  variant = "ghost",
 }: GenerateOutlineButtonProps) {
   return (
     <Button
       type="button"
-      variant={variant}
+      variant="ghost"
       className={`hover:text-primary cursor-pointer hover:bg-transparent disabled:opacity-50 ${className ?? ""}`}
       disabled={disabled ?? isGenerating}
       onClick={onGenerate}

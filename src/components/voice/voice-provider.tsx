@@ -1,23 +1,11 @@
-import {
-  createContext,
-  useContext,
-  useRef,
-  useState,
-  useCallback,
-  useEffect,
-} from "react";
-import { FloatingDockNavigation } from "./dock";
-import { VoiceRecorder } from "./voice-recorder";
-import { api } from "~/trpc/react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { z } from "zod/v4";
 import type { contractorActionsSchema } from "~/lib/voice-actions";
 import { useVoiceStore } from "~/store/voice-store";
+import { api } from "~/trpc/react";
+import { FloatingDockNavigation } from "./dock";
 
 type IntentResult = z.infer<typeof contractorActionsSchema>;
-type IntentSubscriber = (
-  intent: IntentResult,
-  transcription: string,
-) => void | Promise<void>;
 
 interface VoiceContextType {
   startRecording: () => void;
@@ -26,7 +14,6 @@ interface VoiceContextType {
   audioURL: string;
   uploadAudioFile: (file: File) => Promise<void>;
   processRecording: () => Promise<void>;
-  subscribeToIntent: (callback: IntentSubscriber) => () => void;
 }
 
 const VoiceContext = createContext<VoiceContextType>({
@@ -36,7 +23,6 @@ const VoiceContext = createContext<VoiceContextType>({
   audioURL: "",
   uploadAudioFile: async () => {},
   processRecording: async () => {},
-  subscribeToIntent: () => () => {},
 });
 
 export const useVoice = () => {
@@ -47,36 +33,6 @@ export const useVoice = () => {
   return context;
 };
 
-/**
- * Hook to subscribe to intent determination results.
- * Automatically unsubscribes when the component unmounts.
- *
- * @param callback - Function to be called when intent is determined
- * @param deps - Optional dependency array (like useCallback/useEffect)
- *
- * @example
- * ```tsx
- * useVoiceIntentSubscription(async (intent, transcription) => {
- *   if (intent === "create-proposal") {
- *     console.log("Creating proposal with:", transcription);
- *     // Do your work here
- *   }
- * }, []);
- * ```
- */
-export const useVoiceIntentSubscription = (
-  callback: IntentSubscriber,
-  deps: React.DependencyList = [],
-) => {
-  const { subscribeToIntent } = useVoice();
-
-  useEffect(() => {
-    const unsubscribe = subscribeToIntent(callback);
-    return unsubscribe;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subscribeToIntent, ...deps]);
-};
-
 export function VoiceProvider({ children }: { children: React.ReactNode }) {
   const [voiceActions] = useState(["contractor"]);
 
@@ -84,9 +40,10 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
   const [audioURL, setAudioURL] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
-  const subscribersRef = useRef<Set<IntentSubscriber>>(new Set());
 
   const { setIntent, setTranscription } = useVoiceStore();
+
+  const utils = api.useUtils();
 
   const determineIntentMutation = api.voice.determineIntent.useMutation({
     onSuccess: async (data) => {
@@ -96,6 +53,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      console.log("setintent");
       setIntent(data.intent);
       setTranscription(data.text);
     },
@@ -232,16 +190,6 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Subscribe to intent determination
-  const subscribeToIntent = useCallback((callback: IntentSubscriber) => {
-    subscribersRef.current.add(callback);
-
-    // Return unsubscribe function
-    return () => {
-      subscribersRef.current.delete(callback);
-    };
-  }, []);
-
   return (
     <VoiceContext.Provider
       value={{
@@ -251,7 +199,6 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         audioURL,
         uploadAudioFile,
         processRecording,
-        subscribeToIntent,
       }}
     >
       {children}
