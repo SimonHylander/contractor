@@ -1,0 +1,16 @@
+---
+alwaysApply: true
+---
+
+The following rules should be considered ALWAYS
+
+# The package manager
+
+This project uses `pnpm` for all package management and code-running.
+
+# Code writing rules
+
+
+When writing code, always look for `ai-docs.md` files in the directory tree you are working in.
+
+There will most likely be a file somewhere in that tree that will help you write the code more correctly.
