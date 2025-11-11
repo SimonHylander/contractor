@@ -11,8 +11,6 @@ export const env = createEnv({
     PROPOSALES_API_KEY: z.string(),
     PROPOSALES_COMPANY_ID: z.string().transform(Number),
     AI_GATEWAY_API_KEY: z.string(),
-    UPSTASH_REDIS_REST_URL: z.string().url(),
-    UPSTASH_REDIS_REST_TOKEN: z.string(),
     ELEVENLABS_API_KEY: z.string(),
 
     NODE_ENV: z
