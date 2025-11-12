@@ -24,9 +24,9 @@ export function UserSelect() {
       enabled: !!user,
     });
 
-  const setUser = (userId: string) => {
-    signIn(userId);
-    router.refresh();
+  const setUser = async (userId: string) => {
+    await signIn(userId);
+    await router.refresh();
   };
 
   if (!user || isLoading) {

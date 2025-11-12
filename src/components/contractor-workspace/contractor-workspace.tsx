@@ -12,13 +12,11 @@ export function ContractorWorkspace({
   children: React.ReactNode;
 }) {
   return (
-    <VoiceProvider>
-      <ContractorWorkspaceProvider userId={userId}>
-        <Composer.Container>
-          <Composer.Content />
-          <Composer.Sidebar>{children}</Composer.Sidebar>
-        </Composer.Container>
-      </ContractorWorkspaceProvider>
-    </VoiceProvider>
+    <ContractorWorkspaceProvider userId={userId}>
+      <Composer.Container>
+        <Composer.Content />
+        <Composer.Sidebar>{children}</Composer.Sidebar>
+      </Composer.Container>
+    </ContractorWorkspaceProvider>
   );
 }

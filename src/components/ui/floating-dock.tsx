@@ -12,27 +12,13 @@ import {
 import { useRef, useState } from "react";
 
 interface DockItem {
+  id: string;
   title: string;
   icon: React.ReactNode;
   onClick: () => void;
-  key?: string;
 }
 
 export const FloatingDock = ({
-  items,
-  desktopClassName,
-}: {
-  items: DockItem[];
-  desktopClassName?: string;
-}) => {
-  return (
-    <>
-      <FloatingDockDesktop items={items} className={desktopClassName} />
-    </>
-  );
-};
-
-const FloatingDockDesktop = ({
   items,
   className,
 }: {
@@ -50,7 +36,7 @@ const FloatingDockDesktop = ({
       )}
     >
       {items.map((item) => (
-        <IconContainer mouseX={mouseX} key={item.key ?? item.title} {...item} />
+        <IconContainer mouseX={mouseX} key={item.id} {...item} />
       ))}
     </motion.div>
   );
@@ -109,8 +95,13 @@ function IconContainer({
 
   const [hovered, setHovered] = useState(false);
 
+  const handleClick = () => {
+    setHovered(false);
+    onClick();
+  };
+
   return (
-    <button type="button" onClick={onClick} className="cursor-pointer">
+    <button type="button" onClick={handleClick} className="cursor-pointer">
       <motion.div
         ref={ref}
         style={{ width, height }}

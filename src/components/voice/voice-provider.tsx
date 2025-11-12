@@ -39,11 +39,10 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
   const [recording, setRecording] = useState(false);
   const [audioURL, setAudioURL] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
 
   const { setIntent, setTranscription } = useVoiceStore();
-
-  const utils = api.useUtils();
 
   const determineIntentMutation = api.voice.determineIntent.useMutation({
     onSuccess: async (data) => {
@@ -62,15 +61,37 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
     },
   });
 
+  // Cleanup: stop any active streams when component unmounts
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state !== "inactive"
+      ) {
+        mediaRecorderRef.current.stop();
+      }
+    };
+  }, []);
+
   const startRecording = async () => {
     console.log("Start Recording");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      // Stop any existing stream first
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
 
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
+      // Set up event handlers BEFORE starting
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
@@ -81,12 +102,20 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         const url = URL.createObjectURL(blob);
         setAudioURL(url);
+
+        // Stop all tracks to release the microphone
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop());
+          streamRef.current = null;
+        }
       };
 
-      mediaRecorder.start();
+      // Start with a timeslice to ensure data is collected periodically
+      mediaRecorder.start(100); // Collect data every 100ms
       setRecording(true);
     } catch (err) {
       console.error("Error accessing microphone:", err);
+      setRecording(false);
     }
   };
 
@@ -97,6 +126,11 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
         mediaRecorderRef.current.state !== "inactive"
       ) {
         const mediaRecorder = mediaRecorderRef.current;
+
+        // Request any remaining data before stopping
+        if (mediaRecorder.state === "recording") {
+          mediaRecorder.requestData();
+        }
 
         // Add a one-time listener for the stop event
         mediaRecorder.addEventListener(

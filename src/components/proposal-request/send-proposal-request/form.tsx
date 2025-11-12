@@ -1,25 +1,18 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useCallback,
-  useState,
-  useMemo,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 
-import type { CreateProposalRequestSchema } from "~/server/api/schema/proposal-request-schema";
-import { useComposer } from "./context";
+import { skipToken } from "@tanstack/react-query";
 import { GenerateOutlineButton } from "~/components/generate-outline/generate-outline-button";
-import { api } from "~/trpc/react";
 import { useTextStream } from "~/hooks/use-outline-stream";
-import { useVoice } from "~/hooks/use-voice";
+import type { CreateProposalRequestSchema } from "~/server/api/schema/proposal-request-schema";
 import { useVoiceStore } from "~/store/voice-store";
+import { api } from "~/trpc/react";
+import { useComposer } from "./context";
 
 const FormContext = createContext<ReturnType<
   typeof useSendProposalRequestForm
@@ -36,11 +29,7 @@ export const useFormContext = () => {
 };
 
 function useSendProposalRequestForm() {
-  const {
-    project,
-    actions: composerActions,
-    accumulatedDescription,
-  } = useComposer();
+  const { project, actions: composerActions } = useComposer();
 
   const form = useForm({
     defaultValues: {
@@ -55,22 +44,13 @@ function useSendProposalRequestForm() {
       });
 
       form.reset();
-      composerActions.resetDescription();
     },
   });
-
-  useEffect(() => {
-    console.log(accumulatedDescription);
-    if (accumulatedDescription) {
-      form.setFieldValue("description", accumulatedDescription);
-    }
-  }, [accumulatedDescription]);
 
   return form;
 }
 
 function SendProposalRequestForm({ children }: { children: React.ReactNode }) {
-  const { isGenerating } = useComposer();
   const form = useSendProposalRequestForm();
 
   return (
@@ -93,7 +73,7 @@ SendProposalRequestForm.Fields = () => {
   const { project, actions: composerActions } = useComposer();
   const form = useFormContext();
 
-  const { intent, transcription } = useVoiceStore();
+  const { intent, transcription, clear } = useVoiceStore();
 
   const stream = useTextStream({
     subscription: api.proposalRequest.generateOutline.useSubscription,
@@ -110,34 +90,56 @@ SendProposalRequestForm.Fields = () => {
     },
   });
 
-  const intentStream = useTextStream({
-    subscription: api.proposalRequest.generateOutlineForIntent.useSubscription,
-    buildInput: (sessionId) => ({
-      projectId: project.id,
-      outline: form.state.values.description,
-      userInstruction: transcription ?? "",
-      lastEventId: sessionId,
-    }),
+  /* const intentStream = useEditOutlineStream({
+    projectId: project.id,
     onChunk: (chunk) => {
       form.setFieldValue("description", (prev) => prev + chunk);
     },
-    onComplete: () => {},
+    onComplete: () => {
+      clear();
+    },
     onError: (error) => {
       console.error(error);
     },
-  });
+  }); */
 
-  const handleGenerate = useCallback(() => {
-    composerActions.resetDescription();
+  const [intentId, setIntentId] = useState<string | undefined>(undefined);
+
+  api.proposalRequest.generateOutlineForIntent.useSubscription(
+    !intentId
+      ? skipToken
+      : {
+          projectId: project.id,
+          outline: form.state.values.description ?? "",
+          userInstruction: transcription ?? "",
+          lastEventId: intentId,
+        },
+    {
+      onData: ({ id, data }) => {
+        console.log(id);
+        if (id === "chunk" && typeof data === "string") {
+          form.setFieldValue("description", (prev) => prev + data);
+        }
+      },
+      onComplete: () => {
+        stop();
+      },
+      onError: (error) => {
+        stop();
+      },
+    },
+  );
+
+  const handleGenerate = () => {
     stream.start();
-  }, [composerActions, stream]);
+  };
 
   useEffect(() => {
-    console.log("Intent:", intent);
-    console.log("Transcription:", transcription);
     if (intent === "edit-proposal-description" && transcription) {
+      const outline = form.state.values.description;
       form.setFieldValue("description", "");
-      intentStream.start();
+      setIntentId(crypto.randomUUID());
+      // intentStream.start(outline, transcription);
     }
   }, [intent, transcription]);
 

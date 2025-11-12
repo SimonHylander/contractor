@@ -1,7 +1,7 @@
 "use client";
 
 import { skipToken } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SubscriptionHandlers = {
   onData: (event: { id: string; data: unknown }) => void;
@@ -16,7 +16,6 @@ type UseSubscription<TInput> = (
 
 type UseTextStreamArgs<TInput> = {
   subscription: UseSubscription<TInput>;
-  enabled?: boolean;
   buildInput: (sessionId: string) => TInput;
   onChunk?: (chunk: string) => void;
   onComplete?: () => void;
@@ -24,7 +23,6 @@ type UseTextStreamArgs<TInput> = {
 };
 
 export function useTextStream<TInput>({
-  enabled = true,
   subscription,
   buildInput,
   onChunk,
@@ -33,8 +31,17 @@ export function useTextStream<TInput>({
 }: UseTextStreamArgs<TInput>) {
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [firstChunkReceived, setFirstChunkReceived] = useState(false);
+  const buildInputOverrideRef = useRef<((sessionId: string) => TInput) | null>(
+    null,
+  );
 
   const start = useCallback(() => {
+    setFirstChunkReceived(false);
+    setSessionId(crypto.randomUUID());
+  }, []);
+
+  const startWith = useCallback((override: (sessionId: string) => TInput) => {
+    buildInputOverrideRef.current = override;
     setFirstChunkReceived(false);
     setSessionId(crypto.randomUUID());
   }, []);
@@ -43,7 +50,19 @@ export function useTextStream<TInput>({
     setSessionId(undefined);
   }, []);
 
-  subscription(!sessionId ? skipToken : buildInput(sessionId), {
+  // Use override if present for the next start, then clear it
+  const input = !sessionId
+    ? skipToken
+    : (buildInputOverrideRef.current?.(sessionId) ?? buildInput(sessionId));
+
+  useEffect(() => {
+    if (sessionId && buildInputOverrideRef.current) {
+      // Clear after first use so subsequent renders use the base builder
+      buildInputOverrideRef.current = null;
+    }
+  }, [sessionId]);
+
+  subscription(input, {
     onData: ({ id, data }) => {
       console.log(id);
       if (id === "chunk" && typeof data === "string") {
@@ -69,8 +88,9 @@ export function useTextStream<TInput>({
       firstChunkReceived,
       isStreaming: !!sessionId,
       start,
+      startWith,
       stop,
     }),
-    [buildInput, firstChunkReceived, sessionId, start, stop],
+    [buildInput, firstChunkReceived, sessionId, start, startWith, stop],
   );
 }

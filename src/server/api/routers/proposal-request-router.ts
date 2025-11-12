@@ -68,6 +68,7 @@ export const proposalRequestRouter = createTRPCRouter({
       }),
     )
     .subscription(async function* ({ input, signal }) {
+      console.log("generateOutlineForIntent");
       if (!signal) {
         throw new Error("Signal is required for subscription");
       }
@@ -85,12 +86,10 @@ export const proposalRequestRouter = createTRPCRouter({
         });
       }
 
-      console.log("input", input.outline);
-
       const stream = await editOutline(input.outline, input.userInstruction);
 
       for await (const chunk of stream) {
-        console.log(chunk);
+        console.log("chunk", chunk);
         yield tracked("chunk", chunk);
       }
     }),

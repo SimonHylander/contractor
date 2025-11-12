@@ -3,8 +3,8 @@ import { create } from "zustand";
 interface VoiceStore {
   intent?: string;
   transcription?: string;
-  setIntent: (intent: string) => void;
-  setTranscription: (transcription: string) => void;
+  setIntent: (intent?: string) => void;
+  setTranscription: (transcription?: string) => void;
   clear: () => void;
 }
 

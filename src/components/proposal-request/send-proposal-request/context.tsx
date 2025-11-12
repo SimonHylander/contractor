@@ -5,17 +5,12 @@ import type { CreateProposalRequestSchema } from "~/server/api/schema/proposal-r
 import type { Project } from "~/server/data-access/project/project";
 
 interface ProposalRequestActions {
-  toggleGenerating: () => void;
-  updateDescription: (chunk: string) => void;
-  resetDescription: () => void;
   submit: (data: CreateProposalRequestSchema) => Promise<void>;
 }
 
 interface ProposalRequestContextType {
   project: Project;
-  isGenerating: boolean;
   actions: ProposalRequestActions;
-  accumulatedDescription: string;
 }
 
 const ProposalRequestContext = createContext<
@@ -34,16 +29,12 @@ export const useComposer = () => {
 
 export interface ProposalRequestProviderProps {
   project: Project;
-  isGenerating: boolean;
-  accumulatedDescription: string;
   actions: ProposalRequestActions;
   children: ReactNode;
 }
 
 export const Provider = ({
   project,
-  isGenerating,
-  accumulatedDescription,
   actions,
   children,
 }: ProposalRequestProviderProps) => {
@@ -51,8 +42,6 @@ export const Provider = ({
     <ProposalRequestContext.Provider
       value={{
         project,
-        isGenerating,
-        accumulatedDescription,
         actions,
       }}
     >

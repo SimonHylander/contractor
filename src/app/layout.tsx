@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
 import Header from "~/components/header";
+import { Toaster } from "~/components/ui/sonner";
 import { Providers } from "~/providers";
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ export default function RootLayout({
           <div className="bg-background min-h-screen">
             <Header />
             <main>{children}</main>
+            <Toaster />
           </div>
         </Providers>
       </body>

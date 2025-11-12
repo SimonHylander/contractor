@@ -12,9 +12,6 @@ export function SendProposalRequestProvider({
   project: Project;
   children: React.ReactNode;
 }) {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [accumulatedDescription, setAccumulatedDescription] = useState("");
-
   const sendProposalRequest = useSendProposalRequest({
     projectId: project.id,
   });
@@ -22,16 +19,7 @@ export function SendProposalRequestProvider({
   return (
     <Composer.Provider
       project={project}
-      isGenerating={isGenerating}
-      accumulatedDescription={accumulatedDescription}
       actions={{
-        toggleGenerating: () => setIsGenerating((generating) => !generating),
-        updateDescription: (chunk: string) => {
-          setAccumulatedDescription((prev) => prev + chunk);
-        },
-        resetDescription: () => {
-          setAccumulatedDescription("");
-        },
         submit: sendProposalRequest,
       }}
     >
