@@ -1,7 +1,7 @@
 import { z } from "zod/v4";
 
 export const voiceActions = {
-  client: ["create-proposal-request"],
+  client: ["edit-proposal-request-description"],
   contractor: ["create-proposal", "generate-proposal-outline"],
 };
 
