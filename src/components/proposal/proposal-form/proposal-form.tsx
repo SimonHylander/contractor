@@ -3,6 +3,7 @@
 import { useForm } from "@tanstack/react-form";
 import { skipToken } from "@tanstack/react-query";
 import { SparklesIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useComposer } from "~/components/contractor-workspace/context";
 import { Button } from "~/components/ui/button";
@@ -38,6 +39,8 @@ export const useFormContext = () => {
 function useProposalForm(proposalRequestId: string) {
   const createProposal = api.proposal.create.useMutation();
 
+  const router = useRouter();
+
   const form = useForm({
     defaultValues: {
       title: "",
@@ -53,6 +56,8 @@ function useProposalForm(proposalRequestId: string) {
         title,
         description,
       });
+
+      router.refresh();
     },
   });
 

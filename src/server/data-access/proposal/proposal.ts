@@ -59,10 +59,10 @@ export async function createProposal(
     ],
   });
 
-  /* await ProposalesClient.proposals.patchProposalData(proposal.proposal.uuid, {
+  await ProposalesClient.proposals.patchProposalData(proposal.proposal.uuid, {
     company_id: env.PROPOSALES_COMPANY_ID,
     status: "active",
-  }); */
+  });
 
   await db.insert(schema.proposals).values({
     id: proposal.proposal.uuid,

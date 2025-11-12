@@ -69,6 +69,7 @@ export const proposalRequestRouter = createTRPCRouter({
     )
     .subscription(async function* ({ input, signal }) {
       console.log("generateOutlineForIntent");
+
       if (!signal) {
         throw new Error("Signal is required for subscription");
       }
