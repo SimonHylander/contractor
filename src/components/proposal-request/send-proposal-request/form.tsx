@@ -90,27 +90,15 @@ SendProposalRequestForm.Fields = () => {
     },
   });
 
-  /* const intentStream = useEditOutlineStream({
-    projectId: project.id,
-    onChunk: (chunk) => {
-      form.setFieldValue("description", (prev) => prev + chunk);
-    },
-    onComplete: () => {
-      clear();
-    },
-    onError: (error) => {
-      console.error(error);
-    },
-  }); */
-
   const [intentId, setIntentId] = useState<string | undefined>(undefined);
+  const [existingDescription, setExistingDescription] = useState<string>("");
 
   api.proposalRequest.generateOutlineForIntent.useSubscription(
     !intentId
       ? skipToken
       : {
           projectId: project.id,
-          outline: form.state.values.description ?? "",
+          outline: existingDescription ?? "",
           userInstruction: transcription ?? "",
           lastEventId: intentId,
         },
@@ -135,9 +123,11 @@ SendProposalRequestForm.Fields = () => {
   };
 
   useEffect(() => {
-    if (intent === "edit-proposal-description" && transcription) {
+    if (intent === "edit-proposal-request-description" && transcription) {
       const outline = form.state.values.description;
       form.setFieldValue("description", "");
+
+      setExistingDescription(outline);
       setIntentId(crypto.randomUUID());
       // intentStream.start(outline, transcription);
     }

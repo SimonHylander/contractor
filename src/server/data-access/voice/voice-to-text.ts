@@ -15,6 +15,7 @@ export async function voiceToText(audioBase64: string, mimeType: string) {
   const transcription = await elevenlabs.speechToText.convert({
     file: audioFile,
     modelId: "scribe_v1",
+    languageCode: "en",
   });
 
   // Handle different response types

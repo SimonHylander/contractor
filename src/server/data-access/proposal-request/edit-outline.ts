@@ -16,11 +16,11 @@ const outputSchema = z.object({
 
 export async function editOutline(description: string, intentText: string) {
   const prompt = buildPrompt(description, intentText);
+  console.log("prompt", prompt);
 
   const { textStream } = await streamText({
-    model: "gpt-5-nano",
+    model: "gemini-2.5-flash",
     prompt,
-    temperature: 0.1,
   });
 
   return textStream;

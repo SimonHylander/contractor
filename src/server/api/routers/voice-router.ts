@@ -16,6 +16,14 @@ export const voiceRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const text = await voiceToText(input.audioBase64, input.mimeType);
       console.log("voiceToText:", text);
+
+      if (text.includes("(whispers)")) {
+        return {
+          text,
+          intent: null,
+        };
+      }
+
       const intent = await determineIntent(text);
 
       return {
